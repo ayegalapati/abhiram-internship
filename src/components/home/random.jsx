@@ -1,42 +1,3 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Link } from "react-router-dom";
-import AuthorImage from "../../images/author_thumbnail.jpg";
-import nftImage from "../../images/nftImage.jpg";
-
-const Countdown = ({ expiryDate }) => {
-  const [timeLeft, setTimeLeft] = useState("");
-
-  useEffect(() => {
-    // If there is no expiry date, don't run the timer
-    if (!expiryDate) return;
-
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = expiryDate - now;
-
-      if (distance < 0) {
-        clearInterval(interval);
-        setTimeLeft("EXPIRED");
-      } else {
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
-      }
-    }, 1000);
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, [expiryDate]);
-
-  // If there's no time left or no expiry date, hide the badge or show default text
-  if (!timeLeft) return null;
-
-  return <div className="de_countdown">{timeLeft}</div>;
-};
-
 const NewItems = () => {
   const [users, setUsers] = useState([]);
   
@@ -73,10 +34,7 @@ const NewItems = () => {
                     <i className="fa fa-check"></i>
                   </Link>
                 </div>
-                
-                {/* REPLACED THE STATIC DIV WITH THE COMPONENT */}
-                {/* Note: Check your API data to see what the exact property name is for the expiration date (e.g., user.expiryDate) */}
-                <Countdown expiryDate={user.expiryDate} />
+                <div className="de_countdown">5h 30m 32s</div>
 
                 <div className="nft__item_wrap">
                   <div className="nft__item_extra">
