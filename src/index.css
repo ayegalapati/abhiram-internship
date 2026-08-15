@@ -10,3 +10,18 @@
 @import "./css/styles/style.css";
 @import "./css/colors/scheme-01.css";
 @import "./css/styles/coloring.css";
+
+/* Change slick arrow colors so they are visible */
+.slick-prev:before,
+.slick-next:before {
+  color: black !important; /* Change this to your preferred color */
+  font-size: 30px; /* Optional: makes the arrows a bit larger */
+}
+
+/* Optional: adjust the positioning so they don't overlap your content */
+.slick-prev {
+  left: -35px;
+}
+.slick-next {
+  right: -35px;
+}
