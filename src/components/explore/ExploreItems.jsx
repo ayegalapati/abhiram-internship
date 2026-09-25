@@ -1,22 +1,85 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import AuthorImage from "../../images/author_thumbnail.jpg";
 import nftImage from "../../images/nftImage.jpg";
 
+const Countdown = ({ expiryDate }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    // If there is no expiry date, don't run the timer
+    if (!expiryDate) return;
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = expiryDate - now;
+
+      if (distance < 0) {
+        clearInterval(interval);
+        setTimeLeft("EXPIRED");
+      } else {
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+      }
+    }, 1000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [expiryDate]);
+
+  // If there's no time left or no expiry date, hide the badge or show default text
+  if (!timeLeft) return null;
+
+  return <div className="de_countdown">{timeLeft}</div>;
+};
+
 const ExploreItems = () => {
+  const [users, setUsers] = useState([]);
+  const [filter, setFilter] = useState("");
+
+  async function getUsers() {
+    const { data } = await axios.get(
+      "https://us-central1-nft-cloud-functions.cloudfunctions.net/explore"
+    );
+    setUsers(data);
+  }
+
+  useEffect(() => {
+    getUsers();
+  }, []);
+
+  function filterItems(event) {
+    setFilter(event.target.value)
+  }
+  const sortedUsers = [...users];
+  
+  if (filter === "price_low_to_high") {
+    sortedUsers.sort((a,b) => Number(a.price) - Number(b.price));
+  }
+  if (filter === "price_high_to_low") {
+    sortedUsers.sort((a,b) => Number(b.price) - Number(a.price));
+  }
+  if (filter === "likes_high_to_low") {
+    sortedUsers.sort((a,b) => Number(b.likes) - Number(a.likes));
+  }
+
   return (
     <>
       <div>
-        <select id="filter-items" defaultValue="">
+        <select id="filter-items" value={filter} onChange={filterItems}>
           <option value="">Default</option>
           <option value="price_low_to_high">Price, Low to High</option>
           <option value="price_high_to_low">Price, High to Low</option>
           <option value="likes_high_to_low">Most liked</option>
         </select>
       </div>
-      {new Array(8).fill(0).map((_, index) => (
+      {sortedUsers.map((user) => (
         <div
-          key={index}
+          key={user.id}
           className="d-item col-lg-3 col-md-6 col-sm-6 col-xs-12"
           style={{ display: "block", backgroundSize: "cover" }}
         >
@@ -27,11 +90,12 @@ const ExploreItems = () => {
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
               >
-                <img className="lazy" src={AuthorImage} alt="" />
+                <img className="lazy" src={user.authorImage} alt="" />
                 <i className="fa fa-check"></i>
               </Link>
             </div>
-            <div className="de_countdown">5h 30m 32s</div>
+
+            <Countdown expiryDate={user.expiryDate} />
 
             <div className="nft__item_wrap">
               <div className="nft__item_extra">
@@ -52,17 +116,17 @@ const ExploreItems = () => {
                 </div>
               </div>
               <Link to="/item-details">
-                <img src={nftImage} className="lazy nft__item_preview" alt="" />
+                <img src={user.nftImage} className="lazy nft__item_preview" alt="" />
               </Link>
             </div>
             <div className="nft__item_info">
               <Link to="/item-details">
-                <h4>Pinky Ocean</h4>
+                <h4>{user.title}</h4>
               </Link>
-              <div className="nft__item_price">1.74 ETH</div>
+              <div className="nft__item_price">{user.price} ETH</div>
               <div className="nft__item_like">
                 <i className="fa fa-heart"></i>
-                <span>69</span>
+                <span>{user.likes}</span>
               </div>
             </div>
           </div>
