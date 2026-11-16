@@ -1,8 +1,10 @@
 import React, {useState, useEffect} from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import AuthorImage from "../../images/author_thumbnail.jpg";
-import nftImage from "../../images/nftImage.jpg";
+
+const INITIAL_COUNT = 8;
+const LOAD_STEP = 4;
+const MAX_COUNT = 16;
 
 const Countdown = ({ expiryDate }) => {
   const [timeLeft, setTimeLeft] = useState("");
@@ -40,6 +42,7 @@ const Countdown = ({ expiryDate }) => {
 const ExploreItems = () => {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("");
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
   async function getUsers() {
     const { data } = await axios.get(
@@ -55,6 +58,12 @@ const ExploreItems = () => {
   function filterItems(event) {
     setFilter(event.target.value)
   }
+
+  function loadMore(event) {
+    event.preventDefault(); // stop the Link from navigating
+    setVisibleCount((prev) => Math.min(prev + LOAD_STEP, MAX_COUNT));
+  }
+
   const sortedUsers = [...users];
   
   if (filter === "price_low_to_high") {
@@ -67,6 +76,13 @@ const ExploreItems = () => {
     sortedUsers.sort((a,b) => Number(b.likes) - Number(a.likes));
   }
 
+  // Only render the first `visibleCount` items
+  const visibleUsers = sortedUsers.slice(0, visibleCount);
+
+  // Hide the button at 16, or earlier if the API returned fewer items
+  const showLoadMore =
+    visibleUsers.length < Math.min(MAX_COUNT, sortedUsers.length);
+
   return (
     <>
       <div>
@@ -77,7 +93,7 @@ const ExploreItems = () => {
           <option value="likes_high_to_low">Most liked</option>
         </select>
       </div>
-      {sortedUsers.map((user) => (
+      {visibleUsers.map((user) => (
         <div
           key={user.id}
           className="d-item col-lg-3 col-md-6 col-sm-6 col-xs-12"
@@ -132,11 +148,13 @@ const ExploreItems = () => {
           </div>
         </div>
       ))}
-      <div className="col-md-12 text-center">
-        <Link to="" id="loadmore" className="btn-main lead">
-          Load more
-        </Link>
-      </div>
+      {showLoadMore && (
+        <div className="col-md-12 text-center">
+          <Link to="" id="loadmore" className="btn-main lead" onClick={loadMore}>
+            Load more
+          </Link>
+        </div>
+      )}
     </>
   );
 };
